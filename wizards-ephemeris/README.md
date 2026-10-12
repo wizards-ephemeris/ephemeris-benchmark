@@ -1,6 +1,6 @@
 # Wizards Ephemeris
 
-![Wizards Ephemeris](../wizards-ephemeris-site/docs/.vuepress/public/logo.png)
+![Wizards Ephemeris](docs/media/logo.png)
 
 Copyright (c) 2026 Magowie Sp. z o.o.
 
@@ -51,7 +51,7 @@ The full surface is in [docs/api.md](docs/api.md). The calculation pipeline is i
 
 ## Accuracy
 
-Checked by [Empheresis Comparator](../empheresis-comparator/) against Swiss Ephemeris, with solar deflection turned off on the reference so the comparison matches this model. Bounds for 1900–2100:
+Checked by [Empheresis Comparator](https://github.com/wizards-ephemeris/ephemeris-benchmark) against Swiss Ephemeris, with solar deflection turned off on the reference so the comparison matches this model. Bounds for 1900–2100:
 
 | Quantity | Bound |
 |----------|-------|
@@ -68,14 +68,14 @@ Checked by [Empheresis Comparator](../empheresis-comparator/) against Swiss Ephe
 | Ascendant, MC, ARMC, vertex | 5" |
 | House cusps through 2050 | 10" |
 
-![Longitude error versus Swiss Ephemeris](../empheresis-comparator/charts/accuracy.png)
+![Longitude error versus Swiss Ephemeris](docs/media/accuracy.png)
 
 On a 1000-date scan the Sun stays within about 0.2", Uranus about 1.4", Neptune about 2.4". House cusps through 2050, including high latitudes, stay inside the arcsecond bounds above. Past 2050 the delta-T polynomials diverge by several seconds, and near the polar circle that moves a cusp by more than the geometric error.
 
 Swiss Ephemeris is faster. It interpolates ephemeris files; this library evaluates series and does not need those files. A position call here is typically a few tenths of a millisecond. The comparator charts:
 
-- [Position cost](../empheresis-comparator/charts/performance_position.png)
-- [House cost](../empheresis-comparator/charts/performance_houses.png)
+- [Position cost](docs/media/performance_position.png)
+- [House cost](docs/media/performance_houses.png)
 
 Detail and the reasons for each floor: [docs/accuracy.md](docs/accuracy.md).
 
