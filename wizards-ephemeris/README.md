@@ -30,7 +30,7 @@ cmake -S . -B build
 cmake --build build
 ```
 
-The target is `eph`. C++20, no reflection, no bundled data files. In the monorepo the p2996 toolchain flags are applied when that helper is already defined, so a system compiler still configures.
+The target is `eph`. C++20, no reflection, no bundled data files. In the monorepo the p2996 toolchain flags are applied when that helper is already defined, so a system compiler still configures. Pluto and the asteroids use the year series unless the configure line passes `-DEPH_MINOR_SERIES=full`.
 
 The JavaScript package is [`wizards-ephemeris`](https://www.npmjs.com/package/wizards-ephemeris) on npm: `npm install wizards-ephemeris`. From this directory, `./scripts/build-js.sh` builds it with stock Emscripten 6.0.11 and writes a local tarball under `js/pack/`. The same build runs in Docker. Commands are in [js/README.md](js/README.md). The API is in [docs/javascript.md](docs/javascript.md).
 
@@ -77,7 +77,7 @@ Swiss Ephemeris is faster. It interpolates ephemeris files; this library evaluat
 - [Position cost](docs/media/performance_position.png)
 - [House cost](docs/media/performance_houses.png)
 
-Detail and the reasons for each floor: [docs/accuracy.md](docs/accuracy.md).
+Detail and the reasons for each floor: [docs/accuracy.md](docs/accuracy.md). The default build uses a one-year series for Pluto and the asteroids. It sits about 0.3" from the 16-day table those bounds describe. `cmake -DEPH_MINOR_SERIES=full` selects that 16-day series.
 
 ## License
 

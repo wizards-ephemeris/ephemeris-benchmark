@@ -1,6 +1,6 @@
 {
   "name": "wizards-ephemeris",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Positions, houses, and ayanamsas for a natal chart, compiled to WebAssembly.",
   "license": "MIT",
   "type": "module",

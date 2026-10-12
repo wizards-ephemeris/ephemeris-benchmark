@@ -23,7 +23,7 @@ if [ "$node_major" -lt 20 ]; then
   exit 1
 fi
 
-emcmake cmake -S . -B build-js -DEPH_JS=ON
+emcmake cmake -S . -B build-js -DEPH_JS=ON -DEPH_MINOR_SERIES="${EPH_MINOR_SERIES:-year}"
 cmake --build build-js --target eph_js
 
 cd js

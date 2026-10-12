@@ -10,6 +10,16 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+set(EPH_MINOR_SERIES year CACHE STRING "Minor-body series: year or full")
+set_property(CACHE EPH_MINOR_SERIES PROPERTY STRINGS year full)
+if(EPH_MINOR_SERIES STREQUAL "year")
+  set(EPH_MINOR_CHEB src/generated/minor_cheb.cpp)
+elseif(EPH_MINOR_SERIES STREQUAL "full")
+  set(EPH_MINOR_CHEB src/generated/minor_cheb_full.cpp)
+else()
+  message(FATAL_ERROR "EPH_MINOR_SERIES must be year or full, got '${EPH_MINOR_SERIES}'")
+endif()
+
 add_library(eph
   src/Time.cpp
   src/Frames.cpp
@@ -23,14 +33,16 @@ add_library(eph
   src/generated/vsop87_data.cpp
   src/generated/elp_data.cpp
   src/generated/nutation_data.cpp
-  src/generated/minor_cheb.cpp
+  ${EPH_MINOR_CHEB}
 )
 target_include_directories(eph
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 target_compile_options(eph PRIVATE -O2 -Wall -Wextra -Wno-unused-parameter)
-set_source_files_properties(src/generated/minor_cheb.cpp PROPERTIES COMPILE_OPTIONS "-O0")
+if(EPH_MINOR_SERIES STREQUAL "full")
+  set_source_files_properties(src/generated/minor_cheb_full.cpp PROPERTIES COMPILE_OPTIONS "-O0")
+endif()
 target_link_libraries(eph PUBLIC m)
 if(COMMAND apply_p2996_target)
   apply_p2996_target(eph)

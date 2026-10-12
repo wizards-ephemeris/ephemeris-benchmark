@@ -38,7 +38,7 @@ A local build writes `dist/eph.js`, `dist/eph.wasm`, and the TypeScript glue, th
 Install that tarball where you want to try a build that is not on the registry yet:
 
 ```
-npm install ./pack/wizards-ephemeris-0.1.0.tgz
+npm install ./pack/wizards-ephemeris-0.2.0.tgz
 ```
 
 Node loads the wasm from the same directory as `dist/index.js`. In a bundler, pass the wasm URL to `Ephemeris.load({ wasmUrl })`.
@@ -63,7 +63,13 @@ Then, from the library directory:
 ./scripts/build-js.sh
 ```
 
-The script configures `build-js`, builds `eph_js`, runs the Node tests, and packs `js/pack/wizards-ephemeris-0.1.0.tgz`.
+The script uses the year series. The 16-day series is the same script with the switch set:
+
+```
+EPH_MINOR_SERIES=full ./scripts/build-js.sh
+```
+
+The script configures `build-js`, builds `eph_js`, runs the Node tests, and packs `js/pack/wizards-ephemeris-0.2.0.tgz`. The C++ library takes the same choice as `-DEPH_MINOR_SERIES=year` (the default) or `-DEPH_MINOR_SERIES=full`.
 
 ### Docker
 

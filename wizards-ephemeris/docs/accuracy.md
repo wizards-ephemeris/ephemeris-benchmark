@@ -8,8 +8,8 @@ The comparison lives in Empheresis Comparator (`empheresis_tests`). It calls Swi
 | Uranus | 2" |
 | Neptune | 3" |
 | Moon longitude and latitude | 10" (speed 30"/day) |
-| Pluto | 1" (built-in series, every 60 days) |
-| Chiron, Ceres, Pallas, Juno, Vesta | 5" (built-in series, every 60 days) |
+| Pluto | 1" (`full` series, every 60 days) |
+| Chiron, Ceres, Pallas, Juno, Vesta | 5" (`full` series, every 60 days) |
 | True node longitude and latitude | 10" (speed 120"/day) |
 | Mean Lilith longitude, latitude, and speed | 2" |
 | Ayanamsa, six modes, monthly through 2100 | 1" |
@@ -17,6 +17,8 @@ The comparison lives in Empheresis Comparator (`empheresis_tests`). It calls Swi
 | Ascendant, MC, ARMC, vertex | 5" |
 | House cusps, all ten systems, through 2050 | 10" |
 | ΔT versus the comparison ephemeris, 1900–2100 | 15 s |
+
+The Pluto and asteroid rows are the `full` preset, 16-day Chebyshev segments. The default preset is `year`: one polynomial of order 11 per 365 days. Against that 16-day table it adds about 0.3" (Pluto is the worst of the six). The year polynomial replaces about 1.8 MB of 16-day coefficients. `cmake -DEPH_MINOR_SERIES=full` restores the 1" and 5" bounds. The wasm build takes the same switch: `EPH_MINOR_SERIES=full ./scripts/build-js.sh`.
 
 Right ascension and declination use the ecliptic bounds above. The grid is every 90 days and covers every body, including mean Lilith in the inclined mode.
 

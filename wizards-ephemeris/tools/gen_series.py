@@ -10,6 +10,7 @@ Sources (public theories, not Swiss Ephemeris):
 Run from anywhere:
   python3 tools/gen_series.py
   python3 tools/gen_series.py --minors
+  python3 tools/gen_series.py --pack-year
 """
 
 import argparse
@@ -571,7 +572,7 @@ bool minorChebyshev(int body, double jd, double& x, double& y, double& z) {
 
 def repack_minors() -> None:
     import re
-    path = GEN / "minor_cheb.cpp"
+    path = GEN / "minor_cheb_full.cpp"
     text = path.read_text()
     if "struct ChebSeg" not in text:
         raise SystemExit(f"{path} is already packed")
@@ -647,16 +648,264 @@ def gen_minors() -> None:
             i = j
         bodies.append((name, segs))
         print(f"cheb {name} segments {len(segs)} samples {len(uniq)}")
-    (GEN / "minor_cheb.cpp").write_text(wrap_src(emit_packed_minors(bodies)))
+    (GEN / "minor_cheb_full.cpp").write_text(wrap_src(emit_packed_minors(bodies)))
+
+
+YEAR_STEP = 365.0
+YEAR_ORDER = 11
+# Orders 0..3 need int32. An int16 step on orders 2 and 3 moves the
+# inner asteroids by more than 1" against the 16-day series.
+YEAR_LO = 4
+YEAR_LIMIT_ARCSEC = 1.0
+ARCSEC_PER_RAD = 206264.80624709636
+MINOR_NAMES = ("pluto", "chiron", "ceres", "pallas", "juno", "vesta")
+
+
+def canon_double(value: float) -> float:
+    return float(format(value, ".17g"))
+
+
+def packed_scale(max_abs: float, bits: int) -> float:
+    limit = (1 << (bits - 1)) - 1
+    if max_abs <= 0.0:
+        return 1.0
+    scale = canon_double(max_abs / (limit - 1))
+    while abs(int(round(max_abs / scale))) > limit:
+        scale = canon_double(scale * 1.0001)
+    return scale
+
+
+def load_full_series():
+    import re
+
+    import numpy as np
+
+    path = GEN / "minor_cheb_full.cpp"
+    text = path.read_text()
+    if "kChebShort" not in text:
+        raise SystemExit(f"{path} is not the 16-day series")
+    jd0_m = re.search(r"kChebJd0 = ([0-9.]+)", text)
+    short_m = re.search(r"kChebShort\[\] = \{([^}]*)\}", text)
+    if jd0_m is None or short_m is None:
+        raise SystemExit(f"{path} is missing the 16-day epoch")
+    epoch = float(jd0_m.group(1))
+    shorts = [int(part) for part in short_m.group(1).split(",") if part.strip()]
+    row = re.compile(
+        r"\{\{([-\d,]+)\},\{([-\d,]+)\},\{\{([-\d,]+)\},\{([-\d,]+)\},\{([-\d,]+)\}\}\}"
+    )
+    blocks = re.split(r"static const ChebPack k", text)[1:]
+    if len(blocks) < len(MINOR_NAMES):
+        raise SystemExit("expected six bodies in the 16-day series")
+    coef = None
+    n = None
+    for bi, block in enumerate(blocks[: len(MINOR_NAMES)]):
+        rows = row.findall(block)
+        if n is None:
+            n = len(rows)
+            coef = np.zeros((len(MINOR_NAMES), n, 3, 8))
+        if len(rows) != n:
+            raise SystemExit(f"{MINOR_NAMES[bi]} has {len(rows)} segments, expected {n}")
+        for i, (c0s, c1s, h0, h1, h2) in enumerate(rows):
+            coef[bi, i, :, 0] = np.fromstring(c0s, sep=",") * SCALE0
+            coef[bi, i, :, 1] = np.fromstring(c1s, sep=",") * SCALE1
+            hi = np.stack([np.fromstring(part, sep=",") for part in (h0, h1, h2)])
+            coef[bi, i, :, 2:] = hi * np.array(SCALE_HI)
+    before = np.zeros(n, dtype=np.int32)
+    for short in shorts:
+        before[short + 1:] += 1
+    jd0 = epoch + 16.0 * np.arange(n) - before
+    span = np.full(n, 16.0)
+    span[shorts] = 15.0
+    end = float(jd0[-1] + span[-1])
+    return coef, jd0, span, epoch, end
+
+
+def truth_at(coef, jd0, span, body, times):
+    import numpy as np
+
+    times = np.asarray(times, dtype=np.float64)
+    index = np.clip(np.searchsorted(jd0, times, side="right") - 1, 0, len(jd0) - 1)
+    s = np.clip(2.0 * (times - jd0[index]) / span[index] - 1.0, -1.0, 1.0)
+    basis = [np.ones_like(s), s.copy()]
+    for _ in range(6):
+        basis.append(2.0 * s * basis[-1] - basis[-2])
+    return np.einsum("mko,mo->mk", coef[body, index], np.stack(basis, axis=1))
+
+
+def year_basis(s, order):
+    import numpy as np
+
+    cols = [np.ones_like(s), s.copy()]
+    for _ in range(2, order + 1):
+        cols.append(2.0 * s * cols[-1] - cols[-2])
+    return np.stack(cols, axis=1)
+
+
+def pack_year() -> None:
+    import numpy as np
+
+    coef, jd0, span, epoch, end = load_full_series()
+    order = YEAR_ORDER
+    days = end - epoch
+    if days <= YEAR_STEP:
+        raise SystemExit("16-day series is shorter than one year")
+    remainder = days - math.floor(days / YEAR_STEP) * YEAR_STEP
+    count = int(math.floor(days / YEAR_STEP))
+    if remainder > 1e-6:
+        count += 1
+    windows = []
+    for index in range(count):
+        if index == count - 1:
+            w0 = end - YEAR_STEP
+        else:
+            w0 = epoch + index * YEAR_STEP
+        windows.append(w0)
+    fitted = np.zeros((len(MINOR_NAMES), count, 3, order + 1))
+    for index, w0 in enumerate(windows):
+        times = np.arange(w0, w0 + YEAR_STEP, 4.0)
+        if times.size == 0 or times[-1] < w0 + YEAR_STEP:
+            times = np.append(times, w0 + YEAR_STEP)
+        design = year_basis(2.0 * (times - w0) / YEAR_STEP - 1.0, order)
+        for body in range(len(MINOR_NAMES)):
+            solved, *_ = np.linalg.lstsq(design, truth_at(coef, jd0, span, body, times), rcond=None)
+            fitted[body, index] = solved.T
+    lo_scales = [
+        packed_scale(float(np.max(np.abs(fitted[:, :, :, k]))), 32)
+        for k in range(YEAR_LO)
+    ]
+    hi_scales = [
+        packed_scale(float(np.max(np.abs(fitted[:, :, :, k]))), 16)
+        for k in range(YEAR_LO, order + 1)
+    ]
+    hi_n = order + 1 - YEAR_LO
+
+    def decoded(body, index):
+        out = np.zeros((3, order + 1))
+        for axis in range(3):
+            for k, lo_scale in enumerate(lo_scales):
+                out[axis, k] = quantize(fitted[body, index, axis, k], lo_scale, 32) * lo_scale
+            for k, hi_scale in enumerate(hi_scales):
+                out[axis, YEAR_LO + k] = quantize(fitted[body, index, axis, YEAR_LO + k], hi_scale, 16) * hi_scale
+        return out
+
+    worst = 0.0
+    worst_name = MINOR_NAMES[0]
+    for index, w0 in enumerate(windows):
+        times = np.arange(w0, w0 + YEAR_STEP + 1e-9, 1.0)
+        design = year_basis(2.0 * (times - w0) / YEAR_STEP - 1.0, order)
+        for body, name in enumerate(MINOR_NAMES):
+            predicted = design @ decoded(body, index).T
+            reference = truth_at(coef, jd0, span, body, times)
+            delta = np.linalg.norm(predicted - reference, axis=1)
+            distance = np.maximum(np.linalg.norm(reference, axis=1) - 1.0, 0.2)
+            arcsec = float(np.max(delta / distance * ARCSEC_PER_RAD))
+            if arcsec > worst:
+                worst = arcsec
+                worst_name = name
+    print(f"year series max error {worst:.3f}\" ({worst_name})")
+    if worst > YEAR_LIMIT_ARCSEC:
+        raise SystemExit(f"year series error {worst:.3f}\" exceeds {YEAR_LIMIT_ARCSEC}\"")
+    pack_bytes = 4 * 3 * YEAR_LO + 2 * 3 * hi_n
+    lines = [
+        "// Year preset: 365-day windows, order 11, refit from the 16-day series.\n",
+        "// The last window is aligned to the end of that series so it stays a full year.\n",
+        f"struct ChebPack {{ int32_t lo[3][{YEAR_LO}]; int16_t hi[3][{hi_n}]; }};\n",
+        f"constexpr double kChebJd0 = {epoch:.1f};\n",
+        f"constexpr double kChebSpan = {YEAR_STEP:.1f};\n",
+        f"constexpr double kChebEnd = {end:.1f};\n",
+        f"constexpr int kChebCount = {count};\n",
+        "constexpr double kScaleLo[] = {" + ", ".join(f"{scale:.17g}" for scale in lo_scales) + "};\n",
+        "constexpr double kScaleHi[] = {" + ", ".join(f"{scale:.17g}" for scale in hi_scales) + "};\n",
+        f"static_assert(sizeof(ChebPack) == {pack_bytes});\n",
+    ]
+    for body, name in enumerate(MINOR_NAMES):
+        lines.append(f"static const ChebPack k{name.capitalize()}[{count}] = {{\n")
+        for index in range(count):
+            lo = []
+            hi = []
+            for axis in range(3):
+                lo.append("{" + ",".join(
+                    str(quantize(fitted[body, index, axis, k], lo_scales[k], 32))
+                    for k in range(YEAR_LO)
+                ) + "}")
+                hi.append("{" + ",".join(
+                    str(quantize(fitted[body, index, axis, YEAR_LO + k], hi_scales[k], 16))
+                    for k in range(hi_n)
+                ) + "}")
+            lines.append(f"  {{{{{','.join(lo)}}},{{{','.join(hi)}}}}},\n")
+        lines.append("};\n")
+    lines.append(
+        f"""
+double chebJd0(int index) {{
+  if (index == kChebCount - 1) return kChebEnd - kChebSpan;
+  return kChebJd0 + kChebSpan * index;
+}}
+
+double chebCoef(const ChebPack& seg, int axis, int order) {{
+  if (order < {YEAR_LO}) return seg.lo[axis][order] * kScaleLo[order];
+  return seg.hi[axis][order - {YEAR_LO}] * kScaleHi[order - {YEAR_LO}];
+}}
+"""
+    )
+    lines.append(
+        """
+bool minorChebyshev(int body, double jd, double& x, double& y, double& z) {
+  const ChebPack* segs = nullptr;
+  int n = 0;
+  switch (body) {
+"""
+    )
+    for body, name in enumerate(MINOR_NAMES):
+        lines.append(f"    case {body}: segs = k{name.capitalize()}; n = kChebCount; break;\n")
+    lines.append(
+        f"""    default: return false;
+  }}
+  if (n <= 0 || segs == nullptr) return false;
+  if (jd < kChebJd0 || jd > kChebEnd) return false;
+  int index = static_cast<int>((jd - kChebJd0) / kChebSpan);
+  if (index < 0) return false;
+  if (index >= n) index = n - 1;
+  const ChebPack& seg = segs[index];
+  double s = 2.0 * (jd - chebJd0(index)) / kChebSpan - 1.0;
+  if (s < -1.0) s = -1.0;
+  if (s > 1.0) s = 1.0;
+  double t0 = 1.0;
+  double t1 = s;
+  double basis[{order + 1}];
+  basis[0] = t0;
+  basis[1] = t1;
+  for (int k = 2; k < {order + 1}; ++k) {{
+    double t2 = 2.0 * s * t1 - t0;
+    basis[k] = t2;
+    t0 = t1;
+    t1 = t2;
+  }}
+  x = y = z = 0.0;
+  for (int k = 0; k < {order + 1}; ++k) {{
+    x += chebCoef(seg, 0, k) * basis[k];
+    y += chebCoef(seg, 1, k) * basis[k];
+    z += chebCoef(seg, 2, k) * basis[k];
+  }}
+  return true;
+}}
+"""
+    )
+    out = GEN / "minor_cheb.cpp"
+    out.write_text(wrap_src("".join(lines)))
+    print(f"wrote {out} ({count} segments, {out.stat().st_size} bytes)")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--minors", action="store_true")
     parser.add_argument("--repack", action="store_true", help="pack the existing minor table, no Horizons fetch")
+    parser.add_argument("--pack-year", action="store_true", help="refit the 16-day series into the default year preset")
     parser.add_argument("--only", choices=["vsop", "elp", "nut", "minors"])
     args = parser.parse_args()
     GEN.mkdir(parents=True, exist_ok=True)
+    if args.pack_year:
+        pack_year()
+        return
     if args.repack:
         repack_minors()
         return
