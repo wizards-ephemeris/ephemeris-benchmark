@@ -81,13 +81,21 @@ if(EPH_JS)
     message(FATAL_ERROR "EPH_JS requires the Emscripten toolchain (emcmake)")
   endif()
   # The static library must match the link, or emscripten looks for __cxa_throw.
-  target_compile_options(eph PRIVATE -fno-exceptions)
+  # -Oz is a link mode: emcc runs wasm-opt -Oz and emits a smaller runtime.
+  # The JS entry never opens a kernel file, so this link drops the filesystem.
+  target_compile_options(eph PRIVATE -Oz -fno-exceptions -fno-rtti)
   add_executable(eph_js js/src/eph_api.cpp)
   target_link_libraries(eph_js PRIVATE eph)
-  target_compile_options(eph_js PRIVATE -O2 -fno-exceptions -Wall -Wextra)
+  target_compile_options(eph_js PRIVATE -Oz -fno-exceptions -fno-rtti -Wall -Wextra)
   target_link_options(eph_js PRIVATE
+    "-Oz"
     "-fno-exceptions"
+    "-fno-rtti"
     "-sDISABLE_EXCEPTION_CATCHING=1"
+    "-sSUPPORT_LONGJMP=0"
+    "-sMALLOC=emmalloc"
+    "-sFILESYSTEM=0"
+    "-sASSERTIONS=0"
     "-sMODULARIZE=1"
     "-sEXPORT_ES6=1"
     "-sENVIRONMENT=web,node"

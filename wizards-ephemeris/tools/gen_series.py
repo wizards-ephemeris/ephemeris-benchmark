@@ -397,6 +397,210 @@ def chebyshev_fit(times, values, order: int):
     return t0, t1, coef
 
 
+# Stored as integers. Order 0/1 need int32 so a 1e-4 day speed difference
+# stays under 0.05". Higher orders fit in int16 at these scales.
+SCALE0 = 1e-7
+SCALE1 = 1e-10
+SCALE_HI = (1e-7, 1e-9, 1e-10, 1e-9, 1e-9, 1e-9)
+
+
+def quantize(value: float, scale: float, bits: int) -> int:
+    limit = (1 << (bits - 1)) - 1
+    n = int(round(value / scale))
+    if abs(n) > limit:
+        raise SystemExit(f"coefficient {value} does not fit int{bits} at scale {scale}")
+    return n
+
+
+def decode_coef(coef):
+    out = []
+    for axis in range(3):
+        row = [
+            quantize(coef[axis][0], SCALE0, 32) * SCALE0,
+            quantize(coef[axis][1], SCALE1, 32) * SCALE1,
+        ]
+        for k, scale in enumerate(SCALE_HI):
+            row.append(quantize(coef[axis][2 + k], scale, 16) * scale)
+        out.append(row)
+    return out
+
+
+def cheb_at(coef, s: float):
+    t0 = 1.0
+    t1 = s
+    basis = [t0, t1]
+    for _ in range(2, 8):
+        t2 = 2.0 * s * t1 - t0
+        basis.append(t2)
+        t0 = t1
+        t1 = t2
+    return [sum(coef[axis][k] * basis[k] for k in range(8)) for axis in range(3)]
+
+
+def check_packed(bodies) -> None:
+    worst = 0.0
+    for _name, segs in bodies:
+        for jd0, span, coef in segs:
+            decoded = decode_coef(coef)
+            for s in (-1.0, -0.5, 0.0, 0.5, 1.0):
+                a = cheb_at(coef, s)
+                b = cheb_at(decoded, s)
+                for axis in range(3):
+                    worst = max(worst, abs(a[axis] - b[axis]))
+    arcsec = worst * 206264.806
+    print(f"packed chebyshev max error {worst:.3e} AU ({arcsec:.4f}\" at 1 AU)")
+    if worst > 2.4e-7:
+        raise SystemExit("packed coefficients move a body by more than 0.05 arcsec at 1 AU")
+
+
+def emit_packed_minors(bodies) -> str:
+    if not bodies or not bodies[0][1]:
+        raise SystemExit("no chebyshev segments")
+    jd0 = bodies[0][1][0][0]
+    shorts = [i for i, seg in enumerate(bodies[0][1]) if abs(seg[1] - 15.0) < 1e-6]
+    for name, segs in bodies:
+        if abs(segs[0][0] - jd0) > 1e-6:
+            raise SystemExit(f"{name} does not share the chebyshev epoch")
+        got = [i for i, seg in enumerate(segs) if abs(seg[1] - 15.0) < 1e-6]
+        if got != shorts:
+            raise SystemExit(f"{name} short segments {got} differ from {shorts}")
+        cursor = jd0
+        for i, (t0, span, _coef) in enumerate(segs):
+            if abs(t0 - cursor) > 1e-4:
+                raise SystemExit(f"{name} segment {i} jd {t0} is not contiguous")
+            if abs(span - 16.0) > 1e-6 and abs(span - 15.0) > 1e-6:
+                raise SystemExit(f"{name} segment {i} span {span} is not 15 or 16 days")
+            cursor += span
+    check_packed(bodies)
+    short_list = ", ".join(str(i) for i in shorts) if shorts else "0"
+    lines = [
+        "struct ChebPack { int32_t c0[3]; int32_t c1[3]; int16_t hi[3][6]; };\n",
+        f"constexpr double kChebJd0 = {jd0:.1f};\n",
+        f"constexpr int kChebShort[] = {{{short_list}}};\n",
+        f"constexpr int kChebShortCount = {len(shorts)};\n",
+        "static_assert(sizeof(ChebPack) == 60);\n",
+    ]
+    for name, segs in bodies:
+        lines.append(f"static const ChebPack k{name.capitalize()}[{len(segs)}] = {{\n")
+        if not segs:
+            lines.append("};\n")
+            continue
+        for _t0, _span, coef in segs:
+            c0 = ",".join(str(quantize(coef[ax][0], SCALE0, 32)) for ax in range(3))
+            c1 = ",".join(str(quantize(coef[ax][1], SCALE1, 32)) for ax in range(3))
+            hi = []
+            for ax in range(3):
+                hi.append("{" + ",".join(
+                    str(quantize(coef[ax][2 + k], SCALE_HI[k], 16)) for k in range(6)
+                ) + "}")
+            lines.append(f"  {{{{{c0}}},{{{c1}}},{{{','.join(hi)}}}}},\n")
+        lines.append("};\n")
+    lines.append(
+        """
+double chebJd0(int index) {
+  int shorts = 0;
+  for (int s = 0; s < kChebShortCount; ++s) {
+    if (kChebShort[s] >= index) break;
+    ++shorts;
+  }
+  return kChebJd0 + 16.0 * index - shorts;
+}
+
+double chebSpan(int index) {
+  for (int s = 0; s < kChebShortCount; ++s) {
+    if (kChebShort[s] == index) return 15.0;
+  }
+  return 16.0;
+}
+
+double chebCoef(const ChebPack& seg, int axis, int order) {
+  if (order == 0) return seg.c0[axis] * 1e-7;
+  if (order == 1) return seg.c1[axis] * 1e-10;
+  constexpr double kHi[] = {1e-7, 1e-9, 1e-10, 1e-9, 1e-9, 1e-9};
+  return seg.hi[axis][order - 2] * kHi[order - 2];
+}
+
+bool minorChebyshev(int body, double jd, double& x, double& y, double& z) {
+  const ChebPack* segs = nullptr;
+  int n = 0;
+  switch (body) {
+"""
+    )
+    for i, (name, segs) in enumerate(bodies):
+        lines.append(f"    case {i}: segs = k{name.capitalize()}; n = {len(segs)}; break;\n")
+    lines.append(
+        """
+    default: return false;
+  }
+  if (n <= 0 || segs == nullptr) return false;
+  if (jd < chebJd0(0) || jd > chebJd0(n - 1) + chebSpan(n - 1)) return false;
+  int lo = 0;
+  int hi = n - 1;
+  while (lo < hi) {
+    int mid = (lo + hi) / 2;
+    if (chebJd0(mid) + chebSpan(mid) < jd) lo = mid + 1;
+    else hi = mid;
+  }
+  const ChebPack& seg = segs[lo];
+  double s = 2.0 * (jd - chebJd0(lo)) / chebSpan(lo) - 1.0;
+  if (s < -1.0) s = -1.0;
+  if (s > 1.0) s = 1.0;
+  double t0 = 1.0;
+  double t1 = s;
+  double basis[8];
+  basis[0] = t0;
+  basis[1] = t1;
+  for (int k = 2; k < 8; ++k) {
+    double t2 = 2.0 * s * t1 - t0;
+    basis[k] = t2;
+    t0 = t1;
+    t1 = t2;
+  }
+  x = y = z = 0.0;
+  for (int k = 0; k < 8; ++k) {
+    x += chebCoef(seg, 0, k) * basis[k];
+    y += chebCoef(seg, 1, k) * basis[k];
+    z += chebCoef(seg, 2, k) * basis[k];
+  }
+  return true;
+}
+"""
+    )
+    return "".join(lines)
+
+
+def repack_minors() -> None:
+    import re
+    path = GEN / "minor_cheb.cpp"
+    text = path.read_text()
+    if "struct ChebSeg" not in text:
+        raise SystemExit(f"{path} is already packed")
+    pat = re.compile(
+        r"\{([0-9.eE+-]+), ([0-9.eE+-]+), \{\{([^}]*)\}, \{([^}]*)\}, \{([^}]*)\}\}\}"
+    )
+    bodies = []
+    name = None
+    segs = []
+    for line in text.splitlines():
+        if line.startswith("static const"):
+            if name is not None:
+                bodies.append((name, segs))
+            name = line.split()[3].split("[")[0][1:].lower()
+            segs = []
+            continue
+        m = pat.search(line)
+        if not m:
+            continue
+        coef = []
+        for g in (3, 4, 5):
+            coef.append([float(v) for v in m.group(g).split(",")])
+        segs.append((float(m.group(1)), float(m.group(2)), coef))
+    if name is not None:
+        bodies.append((name, segs))
+    path.write_text(wrap_src(emit_packed_minors(bodies)))
+    print(f"wrote {path}")
+
+
 def gen_minors() -> None:
     import numpy as np
     order = 7
@@ -406,8 +610,7 @@ def gen_minors() -> None:
     while year < 2110:
         chunks.append((f"{year}-Jan-01", f"{min(year + 20, 2110)}-Jan-01"))
         year += 20
-    lines = ["struct ChebSeg { double jd0; double span; double c[3][8]; };\n"]
-    counts = []
+    bodies = []
     for name, command in BODIES:
         samples = []
         for start, stop in chunks:
@@ -436,79 +639,27 @@ def gen_minors() -> None:
             times = [r[0] for r in window]
             values = [[r[k] for r in window] for k in (1, 2, 3)]
             t0, t1, coef = chebyshev_fit(times, values, order)
-            segs.append((t0, t1 - t0, coef))
+            packed = [
+                [float(v) for v in comp]
+                for comp in coef
+            ]
+            segs.append((float(t0), float(t1 - t0), packed))
             i = j
-        if not segs:
-            lines.append(f"static const ChebSeg k{name.capitalize()}[1] = {{}};\n")
-            counts.append((name, 0))
-            print(f"cheb {name} segments 0 samples {len(uniq)}")
-            continue
-        lines.append(f"static const ChebSeg k{name.capitalize()}[{len(segs)}] = {{\n")
-        for t0, span, coef in segs:
-            cs = []
-            for comp in coef:
-                cs.append("{" + ", ".join(f"{v:.12e}" for v in comp) + "}")
-            lines.append(f"  {{{t0:.8f}, {span:.8f}, {{{', '.join(cs)}}}}},\n")
-        lines.append("};\n")
-        counts.append((name, len(segs)))
+        bodies.append((name, segs))
         print(f"cheb {name} segments {len(segs)} samples {len(uniq)}")
-    lines.append(
-        """
-bool minorChebyshev(int body, double jd, double& x, double& y, double& z) {
-  const ChebSeg* segs = nullptr;
-  int n = 0;
-  switch (body) {
-"""
-    )
-    for i, (name, nseg) in enumerate(counts):
-        lines.append(f"    case {i}: segs = k{name.capitalize()}; n = {nseg}; break;\n")
-    lines.append(
-        """
-    default: return false;
-  }
-  if (n <= 0 || segs == nullptr) return false;
-  if (jd < segs[0].jd0 || jd > segs[n - 1].jd0 + segs[n - 1].span) return false;
-  int lo = 0;
-  int hi = n - 1;
-  while (lo < hi) {
-    int mid = (lo + hi) / 2;
-    if (segs[mid].jd0 + segs[mid].span < jd) lo = mid + 1;
-    else hi = mid;
-  }
-  const ChebSeg& seg = segs[lo];
-  double s = 2.0 * (jd - seg.jd0) / seg.span - 1.0;
-  if (s < -1.0) s = -1.0;
-  if (s > 1.0) s = 1.0;
-  double t0 = 1.0;
-  double t1 = s;
-  double basis[8];
-  basis[0] = t0;
-  basis[1] = t1;
-  for (int k = 2; k < 8; ++k) {
-    double t2 = 2.0 * s * t1 - t0;
-    basis[k] = t2;
-    t0 = t1;
-    t1 = t2;
-  }
-  x = y = z = 0.0;
-  for (int k = 0; k < 8; ++k) {
-    x += seg.c[0][k] * basis[k];
-    y += seg.c[1][k] * basis[k];
-    z += seg.c[2][k] * basis[k];
-  }
-  return true;
-}
-"""
-    )
-    (GEN / "minor_cheb.cpp").write_text(wrap_src("".join(lines)))
+    (GEN / "minor_cheb.cpp").write_text(wrap_src(emit_packed_minors(bodies)))
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--minors", action="store_true")
+    parser.add_argument("--repack", action="store_true", help="pack the existing minor table, no Horizons fetch")
     parser.add_argument("--only", choices=["vsop", "elp", "nut", "minors"])
     args = parser.parse_args()
     GEN.mkdir(parents=True, exist_ok=True)
+    if args.repack:
+        repack_minors()
+        return
     if args.only == "minors" or args.minors:
         gen_minors()
         if args.only == "minors" or (args.minors and args.only is None and False):
