@@ -1,9 +1,9 @@
-# wizards-ephemeris
+# @magowie/wizards-ephemeris
 
 JavaScript bindings for [Wizards Ephemeris](../README.md). Stock Emscripten builds the wasm. The TypeScript API returns degrees and takes one options object per call.
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const sun = eph.position('sun', new Date(Date.UTC(1988, 0, 30, 15, 10)), {
@@ -25,21 +25,47 @@ This build does not take a `.bsp` directory. Pluto, Chiron, and the four asteroi
 
 ## Build
 
-From the library directory, with system `emcmake` (not a p2996 toolchain):
+The package name is `@magowie/wizards-ephemeris`. It is not on the npm registry, and it does not have its own git repository yet. `private` stays set, so `npm publish` is refused. A local build writes `dist/eph.js`, `dist/eph.wasm`, and the TypeScript glue, then `npm pack` puts them in `pack/`.
+
+Install that tarball where you want to use it:
 
 ```
-emcmake cmake -S . -B build-js -DEPH_JS=ON
-cmake --build build-js --target eph_js
+npm install ./pack/magowie-wizards-ephemeris-0.1.0.tgz
 ```
 
-That writes `js/dist/eph.js` and `js/dist/eph.wasm`. Then, in this directory:
+Node loads the wasm from the same directory as `dist/index.js`. In a bundler, pass the wasm URL to `Ephemeris.load({ wasmUrl })`.
+
+Emscripten 6.0.11 and Node 20 or newer. This is stock `emcmake`, not the p2996 toolchain. `EPH_JS` stays off unless the script passes it, so a normal C++ build does not produce this target.
+
+### Linux
+
+From a clean directory:
 
 ```
-npm install
-npm run build
+git clone https://github.com/emscripten-core/emsdk.git
+cd emsdk
+./emsdk install 6.0.11
+./emsdk activate 6.0.11
+source ./emsdk_env.sh
 ```
 
-`npm run build` runs `tsc` and emits `dist/index.js` next to the wasm glue. `EPH_JS` stays off unless you pass it, so a normal C++ build and the monorepo chart build do not produce this target.
+Then, from the library directory:
+
+```
+./scripts/build-js.sh
+```
+
+The script configures `build-js`, builds `eph_js`, runs the Node tests, and packs `js/pack/magowie-wizards-ephemeris-0.1.0.tgz`.
+
+### Docker
+
+From the library directory, with Docker BuildKit:
+
+```
+docker build -f Dockerfile -o js/pack .
+```
+
+The first stage is `emscripten/emsdk:6.0.11`. The second stage is `node:20` and runs the Node tests before packing. The tarball is the only file written to `js/pack`. The image does not publish the package. The Chromium test stays on the host: `npm run test:browser` from `js/`, after the wasm exists in `js/dist`.
 
 ## Tests
 

@@ -4,7 +4,7 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   resolve: {
     alias: {
-      'wizards-ephemeris': fileURLToPath(new URL('./src/index.ts', import.meta.url))
+      '@magowie/wizards-ephemeris': fileURLToPath(new URL('./src/index.ts', import.meta.url))
     }
   },
   server: {

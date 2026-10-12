@@ -24,7 +24,7 @@ eph::revJul(jd, year, month, day, hour);
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const jd = eph.julianDay({ year: 2000, month: 1, day: 1, hour: 12 })
@@ -44,7 +44,7 @@ eph::JulianDay jd = eph::julianDayUt(2000, 1, 1, 12.0);
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const fromFields = eph.julianDay({ year: 2000, month: 1, day: 1, hour: 12 })
@@ -65,7 +65,7 @@ double seconds = eph::deltaTSeconds(jd);
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const seconds = eph.deltaT({ year: 2000, month: 1, day: 1, hour: 12 })
@@ -88,7 +88,7 @@ eph::EclipticPos sun = chart.position(eph::Body::Sun, jd);
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const sun = eph.position('sun', { year: 2000, month: 1, day: 1, hour: 12 })
@@ -109,7 +109,7 @@ eph::EquatorialPos sun = chart.equatorial(eph::Body::Sun, jd);
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const sun = eph.equatorial('sun', { year: 2000, month: 1, day: 1, hour: 12 })
@@ -132,7 +132,7 @@ double same = eph::sepDeg(sun.lon.deg(), sun.lon.deg());
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const sun = eph.position('sun', { year: 2000, month: 1, day: 1, hour: 12 })
@@ -165,7 +165,7 @@ eph::EclipticPos sidereal = chart.position(eph::Body::Sun, jd);
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const when = { year: 2000, month: 1, day: 1, hour: 12 }
@@ -208,7 +208,7 @@ double ayMean = eph::ayanamsa(eph::Ayanamsa::Lahiri, jd).deg();
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const when = { year: 2000, month: 1, day: 1, hour: 12 }
@@ -244,7 +244,7 @@ double galactic = eph::ayanamsaTrue(eph::Ayanamsa::GalacticCenterMula, jd).deg()
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const when = { year: 2000, month: 1, day: 1, hour: 12 }
@@ -271,7 +271,7 @@ eph::EclipticPos lilith = chart.position(eph::Body::MeanLilith, jd);
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const lilith = eph.position('mean-lilith', { year: 2000, month: 1, day: 1, hour: 12 }, {
@@ -299,7 +299,7 @@ eph::EclipticPos ecliptic = chart.position(eph::Body::MeanLilith, jd);
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const when = { year: 2000, month: 1, day: 1, hour: 12 }
@@ -326,7 +326,7 @@ eph::Houses h = chart.houses(jd, 50.22, 18.67, eph::HouseSystem::Placidus);
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const houses = eph.houses(
@@ -351,7 +351,7 @@ eph::Houses h = chart.houses(jd, 50.22, 18.67, eph::HouseSystem::Equal);
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const houses = eph.houses(
@@ -381,7 +381,7 @@ eph::Houses h = chart.houses(jd, 50.22, 18.67, eph::HouseSystem::WholeSign);
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const houses = eph.houses(
@@ -417,7 +417,7 @@ eph::Houses h = chart.houses(jd, 50.22, 18.67, eph::HouseSystem::WholeSign);
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const houses = eph.houses(
@@ -455,7 +455,7 @@ eph::Houses sidereal = chart.houses(jd, 50.22, 18.67, eph::HouseSystem::Placidus
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const when = { year: 2000, month: 1, day: 1, hour: 12 }
@@ -493,7 +493,7 @@ eph::EquatorialPos siderealSky = chart.equatorial(eph::Body::Sun, jd);
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const when = { year: 2000, month: 1, day: 1, hour: 12 }
@@ -530,7 +530,7 @@ eph::Houses h = chart.houses(jd, 50.22, 18.67, eph::HouseSystem::Sripati);
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const houses = eph.houses(
@@ -555,7 +555,7 @@ eph::Houses h = chart.houses(jd, 50.22, 18.67, eph::HouseSystem::PolichPage);
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const houses = eph.houses(
@@ -581,7 +581,7 @@ eph::Houses koch = chart.houses(jd, 80.0, 18.67, eph::HouseSystem::Koch);
 ```
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const when = { year: 2000, month: 1, day: 1, hour: 12 }

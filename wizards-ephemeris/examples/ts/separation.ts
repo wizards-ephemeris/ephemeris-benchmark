@@ -1,4 +1,4 @@
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 export async function separation() {
   // doc:begin

@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -48,7 +48,7 @@ function page() {
       '```',
       '',
       '```ts',
-      "import { Ephemeris } from 'wizards-ephemeris'",
+      "import { Ephemeris } from '@magowie/wizards-ephemeris'",
       '',
       ts,
       '```',
@@ -66,9 +66,15 @@ const targets = [
 
 const rendered = page()
 const check = process.argv.includes('--check')
+const reachable = targets.filter((target) => existsSync(dirname(target)))
 if (check) {
   let drifted = false
-  for (const target of targets) {
+  for (const target of reachable) {
+    if (!existsSync(target)) {
+      process.stderr.write(`missing: ${target}\n`)
+      drifted = true
+      continue
+    }
     const current = readFileSync(target, 'utf8')
     if (current !== rendered) {
       process.stderr.write(`out of date: ${target}\n`)
@@ -78,4 +84,4 @@ if (check) {
   process.exit(drifted ? 1 : 0)
 }
 
-for (const target of targets) writeFileSync(target, rendered)
+for (const target of reachable) writeFileSync(target, rendered)

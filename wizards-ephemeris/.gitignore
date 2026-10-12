@@ -3,5 +3,7 @@ build/
 build-js/
 js/dist/
 js/node_modules/
+js/pack/
+js/LICENSE
 js/test-results/
 js/playwright-report/

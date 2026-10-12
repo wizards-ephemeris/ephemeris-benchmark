@@ -1,7 +1,8 @@
 {
-  "name": "wizards-ephemeris",
+  "name": "@magowie/wizards-ephemeris",
   "version": "0.1.0",
   "private": true,
+  "description": "Positions, houses, and ayanamsas for a natal chart, compiled to WebAssembly.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -14,10 +15,18 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
+    "prepack": "tsc && node scripts/prepack.mjs",
     "test": "tsx --test test/*.test.ts",
     "test:browser": "playwright test"
   },

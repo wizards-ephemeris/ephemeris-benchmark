@@ -3,7 +3,7 @@
 The same library, compiled with stock Emscripten. Positions come back in degrees. The package does not use the chart kernel and does not include Swiss Ephemeris.
 
 ```ts
-import { Ephemeris } from 'wizards-ephemeris'
+import { Ephemeris } from '@magowie/wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const when = new Date(Date.UTC(1988, 0, 30, 15, 10))
@@ -52,3 +52,5 @@ This build calls `Ephemeris` with an empty kernel directory. Pluto, Chiron, and 
 One instance is sequential. The wrapper sets the method on that instance before each call.
 
 Paired programs, the same calculation in C++ and TypeScript, are in [examples.md](examples.md).
+
+Build the package with Emscripten 6.0.11 on Linux or in Docker, then install the tarball. The commands are in [../js/README.md](../js/README.md). The package is not published to npm yet.
