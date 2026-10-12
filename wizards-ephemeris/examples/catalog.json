@@ -1,0 +1,123 @@
+[
+  {
+    "id": "julian_day",
+    "title": "Julian day",
+    "group": "Time",
+    "summary": "1 January 2000 at 12:00 UT is Julian day 2451545. revJul turns that day back into the calendar date."
+  },
+  {
+    "id": "utc_date",
+    "title": "A Date in UTC",
+    "group": "Time",
+    "summary": "Pass the date as year, month, day, and hours from midnight UT. TypeScript also accepts a Date, read in UTC. Date.UTC by itself is a count of milliseconds, so wrap it in new Date."
+  },
+  {
+    "id": "delta_t",
+    "title": "Delta T",
+    "group": "Time",
+    "summary": "Delta T is TT minus UT, in seconds. Around the year 2000 it is about a minute."
+  },
+  {
+    "id": "tropical_sun",
+    "title": "Tropical Sun",
+    "group": "A tropical chart",
+    "summary": "On this date the Sun is in Capricorn, within a degree of the ecliptic, and moves about one degree a day. Longitude, latitude, and speed are degrees. Distance is astronomical units."
+  },
+  {
+    "id": "equatorial_sun",
+    "title": "Equatorial Sun",
+    "group": "A tropical chart",
+    "summary": "Right ascension and declination are the equatorial place of date. A parallel aspect uses these. In January the Sun's declination is about 23° south."
+  },
+  {
+    "id": "separation",
+    "title": "Separation on the circle",
+    "group": "A tropical chart",
+    "summary": "sep is the shortest arc on the circle, in degrees, from 0 to 180. From 10° to 350° that arc is 20°, not 340°. A longitude separated from itself is 0."
+  },
+  {
+    "id": "lahiri_chart",
+    "title": "Lahiri sidereal Sun",
+    "group": "The same Sun, sidereal",
+    "summary": "A sidereal longitude is the tropical longitude minus the ayanamsa. Lahiri with true nutation is the offset a Swiss-compatible chart subtracts. The whole-sign order is set on the same call. It does not move the Sun."
+  },
+  {
+    "id": "mean_nutation",
+    "title": "Mean nutation",
+    "group": "The same Sun, sidereal",
+    "summary": "Mean nutation leaves the nutation in longitude inside the sidereal place. The two Suns differ by that nutation, a fraction of an arcminute, not by a new zodiac."
+  },
+  {
+    "id": "citra_galactic",
+    "title": "Citra and Galactic center",
+    "group": "The same Sun, sidereal",
+    "summary": "True Citra and Lahiri both put Spica at the sidereal zero, so on this date they sit about an arcminute apart. Galactic center (Mula) is a different zero: the projected right ascension of Sgr A* at the middle of Mula, several degrees from Lahiri. All three values include nutation in longitude."
+  },
+  {
+    "id": "inclined_lilith",
+    "title": "Inclined Lilith",
+    "group": "Lilith",
+    "summary": "The default mean Lilith sits on the mean lunar orbit. Its latitude reaches about 5.15°."
+  },
+  {
+    "id": "ecliptic_lilith",
+    "title": "Ecliptic Lilith",
+    "group": "Lilith",
+    "summary": "Ecliptic Lilith keeps the same longitude and sets the latitude to 0. A declination taken from that point is not the latitude of the orbit."
+  },
+  {
+    "id": "placidus",
+    "title": "Placidus",
+    "group": "Houses",
+    "groupIntro": "The houses below are for 1 January 2000, 12:00 UT, at 50.22° N and 18.67° E, unless the story names another latitude.",
+    "summary": "For Placidus, cusp 1 is the ascendant and cusp 10 is the midheaven. The cusp array starts at 0, so cusp 1 is index 0. At an ordinary latitude fallback stays false."
+  },
+  {
+    "id": "equal_houses",
+    "title": "Equal houses",
+    "group": "Houses",
+    "summary": "Equal houses step 30° from the ascendant. They are not snapped to the start of a sign."
+  },
+  {
+    "id": "whole_sign",
+    "title": "Whole sign, shift then snap",
+    "group": "Houses",
+    "summary": "Subtract the ayanamsa from the ascendant, then snap to a sign. The cusps fall on 0° of the sidereal signs. This chart uses Lahiri and true nutation."
+  },
+  {
+    "id": "snap_then_shift",
+    "title": "Whole sign, snap then shift",
+    "group": "Houses",
+    "summary": "Snap the tropical ascendant to a sign, then subtract the ayanamsa. The cusp leaves the sign boundary by the remainder of the ayanamsa."
+  },
+  {
+    "id": "armc_fixed",
+    "title": "ARMC stays put",
+    "group": "Houses",
+    "summary": "ARMC is the right ascension of the meridian, a time angle. Sidereal mode does not shift it. The ascendant does move."
+  },
+  {
+    "id": "equator_fixed",
+    "title": "Right ascension stays put",
+    "group": "Houses",
+    "summary": "Sidereal mode subtracts the ayanamsa from ecliptic longitude. Right ascension stays the apparent place of date."
+  },
+  {
+    "id": "sripati",
+    "title": "Sripati",
+    "group": "Less common house systems",
+    "summary": "Sripati puts each cusp in the middle of a Porphyry sector. The ascendant is still an angle of the chart, and it is not a cusp."
+  },
+  {
+    "id": "polich_page",
+    "title": "Polich-Page",
+    "group": "Less common house systems",
+    "summary": "In Polich-Page the ascendant is cusp 1 and the midheaven is cusp 10."
+  },
+  {
+    "id": "polar_fallback",
+    "title": "Inside the polar circle",
+    "group": "Less common house systems",
+    "summary": "At latitude 80° a quadrant house cannot always be formed. Placidus and Koch then use Porphyry and set fallback."
+  }
+]

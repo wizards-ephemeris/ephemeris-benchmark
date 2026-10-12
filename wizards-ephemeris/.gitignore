@@ -1,2 +1,7 @@
 data/*.bsp
 build/
+build-js/
+js/dist/
+js/node_modules/
+js/test-results/
+js/playwright-report/

@@ -32,6 +32,10 @@ cmake --build build
 
 The target is `eph`. C++20, no reflection, no bundled data files. In the monorepo the p2996 toolchain flags are applied when that helper is already defined, so a system compiler still configures.
 
+The JavaScript package is a separate stock-Emscripten target, off unless `-DEPH_JS=ON`. From this directory: `emcmake cmake -S . -B build-js -DEPH_JS=ON`, then build `eph_js`. The API and the test commands are in [js/README.md](js/README.md) and [docs/javascript.md](docs/javascript.md).
+
+`eph_example_tests` runs the documented examples. Build it from this directory with a normal C++ compiler, then run the binary. The stories are in [docs/examples.md](docs/examples.md).
+
 ## API
 
 ```cpp

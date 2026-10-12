@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>wizards-ephemeris</title>
+<body>
+<script type="module">
+import { runExampleTests } from './exampleChecks.ts'
+import { runCases } from './cases.ts'
+
+const report = await runCases()
+const exampleFailures = await runExampleTests()
+const failures = report.failures.concat(exampleFailures)
+document.body.dataset.ready = failures.length === 0 ? '1' : '0'
+document.body.textContent = failures.join('\n')
+</script>
+</body>

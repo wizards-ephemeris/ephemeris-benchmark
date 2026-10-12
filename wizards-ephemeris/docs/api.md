@@ -40,3 +40,5 @@ House systems: `Placidus`, `WholeSign`, `Koch`, `Equal`, `Regiomontanus`, `Campa
 Ayanamsas: `Lahiri`, `Raman`, `FaganBradley`, `Krishnamurti`, `Citra`, `GalacticCenterMula`.
 
 Sidereal nutation: `Mean`, `True`. Whole-sign order: `SnapThenShift`, `ShiftThenSnap`. Lilith: `Ecliptic`, `Inclined`. See [traditions.md](traditions.md).
+
+The JavaScript package wraps this surface with degrees and one options object per call. See [javascript.md](javascript.md). Paired C++ and TypeScript programs are in [examples.md](examples.md).
