@@ -1,9 +1,21 @@
 # JavaScript
 
-The same library, compiled with stock Emscripten. Positions come back in degrees. The package does not use the chart kernel and does not include Swiss Ephemeris.
+Install the package, then load one ephemeris:
+
+```
+npm install wizards-ephemeris
+```
 
 ```ts
-import { Ephemeris } from '@magowie/wizards-ephemeris'
+import { Ephemeris } from 'wizards-ephemeris'
+
+const eph = await Ephemeris.load()
+```
+
+Node 20 or newer. The wasm ships inside the package. Positions come back in degrees. The package does not use the chart kernel and does not include Swiss Ephemeris.
+
+```ts
+import { Ephemeris } from 'wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const when = new Date(Date.UTC(1988, 0, 30, 15, 10))
@@ -53,4 +65,4 @@ One instance is sequential. The wrapper sets the method on that instance before 
 
 Paired programs, the same calculation in C++ and TypeScript, are in [examples.md](examples.md).
 
-Build the package with Emscripten 6.0.11 on Linux or in Docker, then install the tarball. The commands are in [../js/README.md](../js/README.md). The package is not published to npm yet.
+`npm install wizards-ephemeris` is the usual way in. Building the wasm yourself, on Linux or in Docker, is in [../js/README.md](../js/README.md).

@@ -1,9 +1,9 @@
-# @magowie/wizards-ephemeris
+# wizards-ephemeris
 
 JavaScript bindings for [Wizards Ephemeris](../README.md). Stock Emscripten builds the wasm. The TypeScript API returns degrees and takes one options object per call.
 
 ```ts
-import { Ephemeris } from '@magowie/wizards-ephemeris'
+import { Ephemeris } from 'wizards-ephemeris'
 
 const eph = await Ephemeris.load()
 const sun = eph.position('sun', new Date(Date.UTC(1988, 0, 30, 15, 10)), {
@@ -23,14 +23,22 @@ House systems use the name `porphyry`. The C++ enumerator is `Porphyrius`.
 
 This build does not take a `.bsp` directory. Pluto, Chiron, and the four asteroids use the built-in series. The calculation notes are in [../docs/javascript.md](../docs/javascript.md).
 
-## Build
-
-The package name is `@magowie/wizards-ephemeris`. It is not on the npm registry, and it does not have its own git repository yet. `private` stays set, so `npm publish` is refused. A local build writes `dist/eph.js`, `dist/eph.wasm`, and the TypeScript glue, then `npm pack` puts them in `pack/`.
-
-Install that tarball where you want to use it:
+## Install
 
 ```
-npm install ./pack/magowie-wizards-ephemeris-0.1.0.tgz
+npm install wizards-ephemeris
+```
+
+Node 20 or newer. The package includes the wasm. Node loads it from the same directory as the package entry. In a bundler, pass the wasm URL to `Ephemeris.load({ wasmUrl })`.
+
+## Build from source
+
+A local build writes `dist/eph.js`, `dist/eph.wasm`, and the TypeScript glue, then `npm pack` puts them in `pack/`.
+
+Install that tarball where you want to try a build that is not on the registry yet:
+
+```
+npm install ./pack/wizards-ephemeris-0.1.0.tgz
 ```
 
 Node loads the wasm from the same directory as `dist/index.js`. In a bundler, pass the wasm URL to `Ephemeris.load({ wasmUrl })`.
@@ -55,7 +63,7 @@ Then, from the library directory:
 ./scripts/build-js.sh
 ```
 
-The script configures `build-js`, builds `eph_js`, runs the Node tests, and packs `js/pack/magowie-wizards-ephemeris-0.1.0.tgz`.
+The script configures `build-js`, builds `eph_js`, runs the Node tests, and packs `js/pack/wizards-ephemeris-0.1.0.tgz`.
 
 ### Docker
 

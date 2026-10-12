@@ -32,7 +32,7 @@ cmake --build build
 
 The target is `eph`. C++20, no reflection, no bundled data files. In the monorepo the p2996 toolchain flags are applied when that helper is already defined, so a system compiler still configures.
 
-The JavaScript package is `@magowie/wizards-ephemeris`. From this directory, `./scripts/build-js.sh` builds it with stock Emscripten 6.0.11 and writes a local tarball under `js/pack/`. The same build runs in Docker. Commands, the toolchain, and the install-from-tarball step are in [js/README.md](js/README.md). The API is in [docs/javascript.md](docs/javascript.md).
+The JavaScript package is [`wizards-ephemeris`](https://www.npmjs.com/package/wizards-ephemeris) on npm: `npm install wizards-ephemeris`. From this directory, `./scripts/build-js.sh` builds it with stock Emscripten 6.0.11 and writes a local tarball under `js/pack/`. The same build runs in Docker. Commands are in [js/README.md](js/README.md). The API is in [docs/javascript.md](docs/javascript.md).
 
 `eph_example_tests` runs the documented examples. Build it from this directory with a normal C++ compiler, then run the binary. The stories are in [docs/examples.md](docs/examples.md).
 

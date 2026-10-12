@@ -1,12 +1,26 @@
 {
-  "name": "@magowie/wizards-ephemeris",
+  "name": "wizards-ephemeris",
   "version": "0.1.0",
-  "private": true,
   "description": "Positions, houses, and ayanamsas for a natal chart, compiled to WebAssembly.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "homepage": "https://wizards-ephemeris.github.io/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wizards-ephemeris/wizards-ephemeris.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wizards-ephemeris/wizards-ephemeris/issues"
+  },
+  "keywords": [
+    "astrology",
+    "ephemeris",
+    "houses",
+    "ayanamsa",
+    "webassembly"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

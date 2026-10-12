@@ -11,7 +11,7 @@
     "baseUrl": ".",
     "skipLibCheck": true,
     "paths": {
-      "@magowie/wizards-ephemeris": ["./src/index.ts"]
+      "wizards-ephemeris": ["./src/index.ts"]
     }
   },
   "include": ["src"]

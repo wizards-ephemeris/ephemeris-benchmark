@@ -1,4 +1,4 @@
-import { Ephemeris } from '@magowie/wizards-ephemeris'
+import { Ephemeris } from 'wizards-ephemeris'
 import { citraGalactic } from '../../examples/ts/citra_galactic.ts'
 import { deltaT } from '../../examples/ts/delta_t.ts'
 import { eclipticLilith } from '../../examples/ts/ecliptic_lilith.ts'

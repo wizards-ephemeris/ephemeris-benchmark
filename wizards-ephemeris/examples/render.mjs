@@ -48,7 +48,7 @@ function page() {
       '```',
       '',
       '```ts',
-      "import { Ephemeris } from '@magowie/wizards-ephemeris'",
+      "import { Ephemeris } from 'wizards-ephemeris'",
       '',
       ts,
       '```',
