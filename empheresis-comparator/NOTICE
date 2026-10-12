@@ -1,0 +1,14 @@
+Empheresis Comparator
+Copyright (c) 2026 Magowie Sp. z o.o.
+
+This comparator links Swiss Ephemeris, which is dual-licensed by Astrodienst AG
+(GNU Affero General Public License, or the Swiss Ephemeris Professional License).
+Authors of Swiss Ephemeris: Dieter Koch and Alois Treindl.
+https://www.astro.com/swisseph/
+https://github.com/aloistr/swisseph
+
+The test harness uses doctest, Copyright (c) 2016-2023 Viktor Kirilov,
+available under the MIT license: https://github.com/doctest/doctest
+
+Wizards Ephemeris, the other library under test, is MIT and lives in the
+sibling project. It is not a derivative of Swiss Ephemeris.

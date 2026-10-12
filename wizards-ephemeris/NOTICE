@@ -1,0 +1,17 @@
+Wizards Ephemeris
+Copyright (c) 2026 Magowie Sp. z o.o.
+
+Nutation coefficients in src/generated/nutation_data.cpp follow the IAU 2000B
+series as published by the IAU SOFA Board in the ERFA library (v2.0.1).
+ERFA is a derived work of the SOFA software collection, copyright the IAU
+SOFA Board, and is distributed under the terms of the ERFA license:
+https://github.com/liberfa/erfa
+
+VSOP87 and ELP2000-82B coefficients are from the IMCCE theories
+(Bureau des Longitudes / IMCCE). Those series are published for scientific use.
+
+The built-in Chebyshev series for Pluto, Chiron, Ceres, Pallas, Juno, and
+Vesta is a fit to public NASA JPL Horizons state vectors. The fit is part of
+this project. The underlying Horizons data is a public NASA product.
+
+This library does not contain Swiss Ephemeris.
