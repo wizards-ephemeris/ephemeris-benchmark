@@ -51,6 +51,8 @@ export interface Glue {
 
 export interface LoadOptions {
   wasmUrl?: string
+  // Bundlers cannot follow the relative glue import, so the page passes the public URL.
+  glueUrl?: string
 }
 
 type Factory = (options?: { locateFile?: (path: string) => string }) => Promise<Glue>
@@ -62,7 +64,8 @@ function glueHref(): string {
 }
 
 export async function loadGlue(options: LoadOptions = {}): Promise<Glue> {
-  const imported = await import(/* @vite-ignore */ glueHref())
+  const href = options.glueUrl ?? glueHref()
+  const imported = await import(/* @vite-ignore */ href)
   const create = imported.default as Factory
   const wasmUrl = options.wasmUrl
   return create(wasmUrl
